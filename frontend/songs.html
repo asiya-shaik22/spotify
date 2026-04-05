@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spotify Clone</title>
+
+  <style>
+    body {
+      background: linear-gradient(180deg, #121212, #000000);
+      color: white;
+      font-family: Arial;
+      padding: 20px;
+    }
+
+    h2 { color: #1db954; }
+
+    .top-bar {
+      margin-bottom: 20px;
+    }
+
+    input, select {
+      padding: 8px;
+      margin: 5px;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      padding: 8px 14px;
+      background: #1db954;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .songs-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 15px;
+    }
+
+    .song-card {
+      background: #181818;
+      padding: 10px;
+      border-radius: 10px;
+      position: relative;
+    }
+
+    .song-img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .title {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .artist {
+      font-size: 12px;
+      color: #b3b3b3;
+    }
+
+    .heart {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      cursor: pointer;
+    }
+
+    .liked { color: red; }
+
+    .section {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>🎵 Songs</h2>
+
+<div class="top-bar">
+  <button onclick="loadSongs()">Load Songs</button>
+
+  <input id="search" placeholder="Search songs">
+  <button onclick="searchSongs()">Search</button>
+
+  <!-- ✅ Playlist dropdown -->
+  <select id="playlistSelect"></select>
+  <button onclick="loadPlaylists()">Load Playlists</button>
+
+  <button onclick="loadPlaylist()">View Playlist</button>
+</div>
+
+<div id="songsList" class="songs-container"></div>
+
+<div class="section">
+  <h3>Playlist Songs</h3>
+  <div id="playlistSongs" class="songs-container"></div>
+</div>
+
+<div class="section">
+  <h3>Add Song</h3>
+  <input id="title" placeholder="Title">
+  <input id="artist" placeholder="Artist">
+  <input id="album" placeholder="Album">
+  <button onclick="addSong()">Add</button>
+</div>
+
+<script>
+const token = localStorage.getItem("token");
+
+function createCard(song) {
+  const card = document.createElement("div");
+  card.className = "song-card";
+
+  card.innerHTML = `
+    <span class="heart" onclick="toggleLike(this)">♡</span>
+    <img class="song-img" src="https://picsum.photos/200?random=${song.id}">
+    <div class="title">${song.title}</div>
+    <div class="artist">${song.artist}</div>
+    <button onclick="addToPlaylist(${song.id})">➕ Add</button>
+  `;
+
+  return card;
+}
+
+function renderSongs(data) {
+  const container = document.getElementById("songsList");
+  container.innerHTML = "";
+
+  data.forEach(song => {
+    container.appendChild(createCard(song));
+  });
+}
+
+async function loadSongs() {
+  const res = await fetch("/songs/", {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const data = await res.json();
+  renderSongs(data);
+}
+
+async function searchSongs() {
+  const q = document.getElementById("search").value;
+
+  const res = await fetch(`/songs/search?name=${q}`, {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const data = await res.json();
+  renderSongs(data);
+}
+
+async function addSong() {
+  await fetch("/songs/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({
+      songs: [{
+        title: title.value,
+        artist: artist.value,
+        album: album.value
+      }]
+    })
+  });
+
+  loadSongs();
+}
+
+async function loadPlaylists() {
+  const res = await fetch("/playlists/", {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const data = await res.json();
+
+  const select = document.getElementById("playlistSelect");
+  select.innerHTML = "";
+
+  data.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.text = p.name;
+    select.appendChild(opt);
+  });
+}
+
+async function addToPlaylist(songId) {
+  const playlistId = document.getElementById("playlistSelect").value;
+
+  const res = await fetch(`/playlists/${playlistId}/add-song`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({ song_id: songId })
+  });
+
+  alert(res.ok ? "Added 🎵" : "Failed ❌");
+}
+
+async function loadPlaylist() {
+  const id = document.getElementById("playlistSelect").value;
+
+  const res = await fetch(`/playlists/${id}`, {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const data = await res.json();
+
+  const container = document.getElementById("playlistSongs");
+  container.innerHTML = "";
+
+  data.songs.forEach(song => {
+    container.appendChild(createCard(song));
+  });
+}
+
+function toggleLike(el) {
+  el.classList.toggle("liked");
+  el.innerText = el.classList.contains("liked") ? "❤️" : "♡";
+}
+
+/* 🔥 auto load */
+window.onload = () => {
+  loadSongs();
+  loadPlaylists();
+};
+</script>
+
+</body>
+</html>

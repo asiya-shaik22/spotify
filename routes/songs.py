@@ -20,7 +20,7 @@ def create_songs(data: schemas.SongList,
 
 
 @router.get("/")
-def get_songs(limit: int = 10, offset: int = 0, db: Session = Depends(get_db),user=Depends(get_current_user) ):
+def get_songs(limit: int = 30, offset: int = 0, db: Session = Depends(get_db)):
     return db.query(models.Song).offset(offset).limit(limit).all()
 
 

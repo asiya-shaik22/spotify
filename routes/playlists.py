@@ -42,7 +42,7 @@ def get_playlist(
 def create_playlist(p: schemas.PlaylistCreate, 
                     db: Session = Depends(get_db),
                     user=Depends(get_current_user)):
-    playlist = models.Playlist(name=p.name, user_id=p.user_id)
+    playlist = models.Playlist(name=p.name, user_id=user.id)
     db.add(playlist)
     db.commit()
     db.refresh(playlist)

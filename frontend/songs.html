@@ -37,6 +37,9 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
       gap: 15px;
+
+      max-height: 400px;   /* 🔥 limits height */
+      overflow-y: auto;    /* 🔥 enables scroll */
     }
 
     .song-card {
@@ -81,33 +84,43 @@
 <body>
 
 <h2>🎵 Songs</h2>
-
+<!-- playlis -->
+<!-- SONG ACTIONS -->
 <div class="top-bar">
   <button onclick="loadSongs()">Load Songs</button>
 
   <input id="search" placeholder="Search songs">
   <button onclick="searchSongs()">Search</button>
-
-  <!-- ✅ Playlist dropdown -->
-  <select id="playlistSelect"></select>
-  <button onclick="loadPlaylists()">Load Playlists</button>
-
-  <button onclick="loadPlaylist()">View Playlist</button>
 </div>
 
+<!-- SONG LIST -->
 <div id="songsList" class="songs-container"></div>
 
-<div class="section">
-  <h3>Playlist Songs</h3>
-  <div id="playlistSongs" class="songs-container"></div>
-</div>
-
+<!-- ADD SONG -->
 <div class="section">
   <h3>Add Song</h3>
   <input id="title" placeholder="Title">
   <input id="artist" placeholder="Artist">
   <input id="album" placeholder="Album">
   <button onclick="addSong()">Add</button>
+</div>
+
+<!-- PLAYLIST SECTION -->
+<div class="section">
+  <h3>Playlists</h3>
+
+  <button onclick="loadPlaylists()">Load Playlists</button>
+
+  <select id="playlistSelect"></select>
+
+  <button onclick="loadPlaylist()">View Playlist</button>
+
+  <!-- CREATE PLAYLIST -->
+  <h4>Create Playlist</h4>
+  <input id="playlistName" placeholder="Playlist name">
+  <button onclick="createPlaylist()">Create</button>
+
+  <div id="playlistSongs" class="songs-container"></div>
 </div>
 
 <script>
@@ -193,6 +206,26 @@ async function loadPlaylists() {
     select.appendChild(opt);
   });
 }
+
+async function createPlaylist() {
+    const name = document.getElementById("playlistName").value;
+
+    const res = await fetch("/playlists/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ name: name })
+    });
+
+    if (res.ok) {
+      alert("Playlist created 🎉");
+      loadPlaylists();   // refresh dropdown
+    } else {
+      alert("Failed ❌");
+    }
+  }
 
 async function addToPlaylist(songId) {
   const playlistId = document.getElementById("playlistSelect").value;

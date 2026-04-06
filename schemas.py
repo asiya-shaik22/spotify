@@ -37,7 +37,7 @@ class SongList(BaseModel):
 # -------- PLAYLIST --------
 class PlaylistCreate(BaseModel):
     name: str
-    user_id: int
+
 
 
 # -------- ADD SONG TO PLAYLIST --------
